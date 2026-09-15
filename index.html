@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>moat, the risk layer for agent payments</title>
+<meta name="description" content="Moat is the fraud and risk layer for AI agent payments. Built in the open during Thirduni, autumn 2026.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='69 43 144 144'%3E%3Cg fill='none' stroke='%23171717' stroke-width='10' stroke-linecap='round'%3E%3Cpath d='M117 52.4 A67 67 0 0 1 202.7 141.2'/%3E%3Cpath d='M177.5 171.2 A67 67 0 0 1 86.1 76.6'/%3E%3C/g%3E%3Cg fill='%23171717'%3E%3Ccircle cx='99.7' cy='62.2' r='11'/%3E%3Ccircle cx='192.3' cy='158.1' r='11'/%3E%3C/g%3E%3Cpath fill='%23171717' d='M110 90H173a7 7 0 0 1 7 7v36a7 7 0 0 1-7 7h-63a7 7 0 0 1-7-7V97a7 7 0 0 1 7-7Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
+<style>
+  :root{
+    --bg:#FFFFFF; --ink:#111111; --ink-2:#6E6E73; --surface:#F7F7F8;
+    --sand:#E6E6E8; --sand-2:#C7C7CC;
+    --red:#EB001B; --orange:#FF5F00; --yellow:#F79E1B; --green:#00A650;
+    --red-tint:#FDE7E9; --yellow-tint:#FEF3E0; --red-ink:#C4001A;
+    --sage:#F79E1B; --sage-2:#FEF3E0; --clay:#EB001B; --clay-2:#FDE7E9; --olive:#FF5F00; --white:#FFFFFF;
+    --max:1240px; --pad:clamp(20px,5vw,64px); --sec:clamp(96px,14vw,184px);
+    --font:"Manrope","Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-weight:500;
+       font-size:clamp(1rem,1.05vw,1.125rem);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--olive);outline-offset:4px;border-radius:2px}
+  .wrap{max-width:var(--max);margin:0 auto;padding-inline:var(--pad)}
+  h1,h2,h3{margin:0;font-weight:800;letter-spacing:-0.03em;line-height:1}
+  p{margin:0}
+  .section-h{font-size:clamp(1.9rem,4vw,3.4rem);max-width:16em}
+  .section-lede{margin-top:20px;color:var(--ink-2);max-width:36em;font-size:1.05rem}
+  section{padding-block:var(--sec);border-top:1px solid var(--sand)}
+  .hero{border-top:0;padding-block:0}
+
+  /* nav */
+  .nav{position:sticky;top:0;z-index:20;background:transparent}
+  .nav .wrap{padding-block:10px}
+  .navbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+          height:60px;padding-inline:clamp(14px,2.4vw,24px);border-radius:16px;
+          background:rgba(226,226,231,.58);
+          -webkit-backdrop-filter:blur(20px) saturate(1.15);backdrop-filter:blur(20px) saturate(1.15);
+          border:1px solid rgba(17,17,17,.10);
+          box-shadow:0 6px 22px rgba(17,17,17,.07)}
+  @supports not (backdrop-filter:blur(2px)){.navbar{background:#EDEDF0}}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .wordmark{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
+  .mark{width:34px;height:34px;display:block;overflow:visible}
+  .mark-ring{transform-box:view-box;transform-origin:141px 115px;
+             transition:transform .75s cubic-bezier(.22,.9,.24,1)}
+  .wordmark:hover .mark-ring,.wordmark:focus-visible .mark-ring{transform:rotate(180deg)}
+  footer .mark{width:56px;height:56px}
+  @media (prefers-reduced-motion:reduce){.mark-ring{transition:none}}
+  .nav-links{display:flex;gap:clamp(18px,3vw,36px);list-style:none;margin:0;padding:0}
+  .nav-links a{text-decoration:none;font-weight:600;color:var(--ink-2);font-size:.95rem}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-tag{font-size:.85rem;color:var(--ink-2)}
+  @media (max-width:820px){.nav-tag{display:none}}
+  @media (max-width:560px){.nav-links{display:none}}
+
+  /* hero */
+  .hero .wrap{display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:clamp(32px,6vw,96px);
+              align-items:center;min-height:calc(100vh - 76px);padding-block:clamp(56px,8vw,110px)}
+  .hero h1{font-size:clamp(1.6rem,4vw,3.55rem)}
+  .line{display:block;overflow:hidden;padding-bottom:.14em;margin-bottom:-.14em}
+  .line-inner{display:block;white-space:nowrap;will-change:transform}
+  .js .line-inner{transform:translateY(112%)}
+  .lede{margin-top:clamp(24px,3vw,40px);font-size:clamp(1.05rem,1.35vw,1.3rem);line-height:1.55;color:var(--ink-2);max-width:30em}
+  .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:28px;margin-top:clamp(28px,3.5vw,48px)}
+  .js .lede,.js .cta-row,.js .nav,.js .hero-fig{opacity:0}
+  .btn{display:inline-block;background:var(--ink);color:var(--bg);text-decoration:none;font-weight:700;
+       padding:16px 28px;border-radius:999px;border:0;font:inherit;font-weight:700;cursor:pointer;
+       transition:background .25s ease,transform .25s ease}
+  .btn:hover{background:var(--orange);transform:translateY(-1px)}
+  .textlink{text-decoration:none;font-weight:700;border-bottom:2px solid var(--sand-2);padding-bottom:2px;transition:border-color .2s}
+  .textlink:hover{border-color:var(--ink)}
+  .proof{width:100%;height:auto;display:block;overflow:visible}
+  .proof text{font-family:var(--font);font-size:12.5px;font-weight:800;fill:#FFFFFF}
+  .lg-tok,.lg-splash{opacity:0}
+  .hero-cap{margin-top:18px;font-size:.9rem;color:var(--ink-2);text-align:center}
+  @media (max-width:860px){.hero .wrap{grid-template-columns:1fr;min-height:0}.hero-fig{max-width:320px;margin:20px auto 0}}
+  @media (max-width:640px){
+    .hero .wrap{text-align:center}
+    .hero h1{font-size:clamp(1.85rem,8.4vw,2.6rem)}
+    .line{overflow:visible;padding-bottom:0;margin-bottom:0}
+    .line-inner{white-space:normal}
+    .js .line-inner{transform:none}
+    .lede{margin-left:auto;margin-right:auto}
+    .cta-row{justify-content:center;gap:20px}
+  }
+
+  /* creed */
+  .creed{border-top:0;padding-block:clamp(48px,7vw,80px)}
+  .creed .wrap{max-width:900px}
+  .creed-line{min-height:44vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+              text-align:center;gap:clamp(20px,3vw,32px)}
+  .creed-line p{font-size:clamp(1.5rem,4.2vw,3rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;max-width:16em}
+  .creed-line.is-last p{color:var(--olive)}
+  .creed .glyph{width:clamp(96px,14vw,150px);height:auto;display:block;overflow:visible}
+  .creed .glyph line,.creed .glyph circle{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round}
+  .creed .glyph .g-tie{stroke:var(--sand-2);stroke-width:2}
+  .creed .glyph .g-empty{stroke:var(--sand-2);stroke-width:2.5;stroke-dasharray:6 8}
+  .creed .glyph .g-fill{stroke:var(--olive);stroke-width:4}
+  .creed .glyph .g-core{stroke:none;fill:var(--olive)}
+  .creed .glyph rect{fill:var(--ink)}
+  .js .creed-line p,.js .creed .glyph{opacity:0}
+
+  /* ===== pillars with mini diagrams ===== */
+  .pillars-sec{border-top:1px solid var(--sand)}
+  .pillars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(32px,4vw,56px);margin-top:clamp(44px,6vw,80px)}
+  .pillar h3{font-size:1.35rem;margin:22px 0 12px;letter-spacing:-0.02em}
+  .pillar p{color:var(--ink-2)}
+  .mini{width:100%;height:auto;display:block;overflow:visible}
+  @media (max-width:980px){
+    .pillars-sec .section-h,.pillars-sec .section-lede{margin-left:auto;margin-right:auto;text-align:center}
+    .pillars{text-align:center}
+    .pillar{max-width:520px;margin-inline:auto}
+    .pillar h3{margin-top:16px}
+    .pillar p{margin-inline:auto;max-width:42ch}
+    .mini{max-width:400px;margin-inline:auto}
+  }
+  .mini text{font-family:var(--font);font-weight:700;font-size:13px;fill:var(--ink-2)}
+  @media (max-width:820px){.pillars{grid-template-columns:1fr}}
+
+  /* ===== product ===== */
+  .product .section-h{max-width:18em}
+  .callpair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,2vw,20px);margin-top:clamp(40px,6vw,64px)}
+  .codepanel{background:var(--ink);color:#F2F2F3;border-radius:12px;overflow:hidden;min-height:196px}
+  .codebar{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid #2A2A2A}
+  .codebar i{width:9px;height:9px;border-radius:50%;background:#3A3A3A}
+  .codebar span{margin-left:auto;font-size:.72rem;font-weight:700;color:#8A8A8F;letter-spacing:.02em}
+  .code{margin:0;padding:18px 20px 20px;font:600 clamp(.78rem,1.5vw,.92rem)/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        white-space:pre;overflow-x:auto;color:#E8E8EA}
+  .code .k{color:#8A8A8F;font-weight:600}
+  .code .deny{color:var(--red)}
+  .code .ln{display:block}
+  .caret{display:inline-block;width:.55em;height:1.05em;background:var(--orange);vertical-align:-.15em;margin-left:2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .js .verdictpanel .ln{opacity:0}
+  @media (max-width:760px){.callpair{grid-template-columns:1fr}.codepanel{min-height:0}}
+
+  .arch{display:grid;grid-template-columns:1fr 44px 1fr 44px 1fr;gap:clamp(8px,1.4vw,16px);align-items:stretch;
+        margin-top:clamp(28px,4vw,40px)}
+  .anode{border:1px solid var(--sand);border-radius:12px;background:var(--surface);padding:clamp(14px,2vw,20px)}
+  .anode h4{margin:0 0 12px;font-size:.78rem;font-weight:700;color:var(--ink-2);letter-spacing:.02em}
+  .anode.moat{border-color:var(--ink);background:var(--bg)}
+  .arow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--sand);
+        font-size:clamp(.82rem,1.3vw,.92rem);font-weight:600}
+  .arow:first-of-type{border-top:0;padding-top:0}
+  .arow.inject span{color:var(--red-ink)}
+  .src{font-style:normal;font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .src.u{background:#E4F5EA;color:#0B7A3A}
+  .src.t{background:var(--sand);color:var(--ink-2)}
+  .src.x{background:var(--red-tint);color:var(--red-ink)}
+  .acall{margin-top:12px;background:var(--ink);color:#fff;border-radius:8px;padding:9px 12px;
+         font:700 .8rem/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .apol{margin-top:12px;padding:9px 12px;border-radius:8px;background:var(--surface);font-size:.8rem;font-weight:600;color:var(--ink-2)}
+  .averdict{margin-top:12px;display:inline-block;background:var(--red);color:#fff;font-weight:800;letter-spacing:.06em;
+            text-transform:uppercase;font-size:.78rem;padding:7px 14px;border-radius:999px}
+  .aconn{position:relative;align-self:center;height:2px;background:var(--sand)}
+  .aconn i{position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:0 50%}
+  .aconn i::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:7px solid var(--ink);border-right:0}
+  .aconn b{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-size:.62rem;font-weight:700;color:var(--red-ink);white-space:nowrap}
+  .aconn.c2 i{background:var(--red)}
+  .aconn.c2 i::after{border-left-color:var(--red)}
+  .rails{display:flex;flex-wrap:wrap;gap:6px}
+  .rails span{font-size:.74rem;font-weight:700;padding:5px 10px;border-radius:999px;border:1px solid var(--sand-2);color:var(--ink-2)}
+  .anote{margin-top:14px;font-size:.84rem;color:var(--ink-2);line-height:1.5}
+  .n3.dim{opacity:.45}
+  @media (max-width:820px){
+    .arch{grid-template-columns:1fr;gap:12px}
+    .aconn{height:36px;width:2px;justify-self:center;background:var(--sand)}
+    .aconn i{transform:scaleY(0);transform-origin:50% 0}
+    .aconn i::after{right:-4px;top:auto;bottom:-1px;border:5px solid transparent;border-top:7px solid var(--ink);border-bottom:0}
+    .aconn.c2 i::after{border-top-color:var(--red);border-left-color:transparent}
+    .aconn b{left:14px;top:50%;transform:translateY(-50%)}
+  }
+
+  .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,2vw,20px);margin-top:clamp(28px,4vw,44px)}
+  .vcard{border:1px solid var(--sand);border-radius:12px;padding:clamp(16px,2.2vw,22px);background:var(--bg)}
+  .vcard.hi{border-color:var(--orange);background:#FFF6EF}
+  .vtag{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:12px}
+  .vtag.allow{background:#E4F5EA;color:#0B7A3A} .vtag.stepup{background:var(--orange);color:#fff} .vtag.denyv{background:var(--red);color:#fff}
+  .vcard p{font-size:.94rem;color:var(--ink-2);line-height:1.55}
+  @media (max-width:820px){
+    .trio{grid-template-columns:1fr}
+    .anode,.vcard,.dcard{text-align:center}
+    .arow{justify-content:center;gap:14px}
+    .rails{justify-content:center}
+    .anote,.vcard p,.dcard p{margin-inline:auto;max-width:44ch}
+  }
+
+  .deploy{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,2vw,20px);margin-top:clamp(12px,2vw,20px)}
+  .dcard{border:1px solid var(--sand);border-radius:12px;padding:clamp(16px,2.2vw,22px);background:var(--surface)}
+  .dcard h4{margin:0 0 8px;font-size:1.05rem;font-weight:800;letter-spacing:-0.02em}
+  .dcard p{font-size:.94rem;color:var(--ink-2);line-height:1.55}
+  .dcard code{display:block;margin-top:12px;font:600 .8rem/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink)}
+  @media (max-width:760px){.deploy{grid-template-columns:1fr}}
+
+  .evidence{margin-top:clamp(56px,8vw,96px);padding-top:clamp(32px,5vw,48px);border-top:2px solid var(--ink)}
+  .evidence h3{font-size:clamp(1.5rem,3vw,2.3rem);letter-spacing:-0.03em}
+  .proof-lede{margin-top:14px;color:var(--ink-2);max-width:40em}
+  .incidents{list-style:none;margin:clamp(24px,4vw,36px) 0 0;padding:0}
+  .incidents li{display:grid;grid-template-columns:clamp(72px,9vw,110px) 1fr;gap:clamp(12px,2vw,24px);padding:18px 0;border-top:1px solid var(--sand)}
+  .incidents time{font-size:.8rem;font-weight:800;color:var(--red);padding-top:3px;font-variant-numeric:tabular-nums}
+  .incidents strong{display:block;font-size:clamp(1rem,1.5vw,1.15rem);font-weight:800;letter-spacing:-0.02em}
+  .incidents span{display:block;margin-top:4px;color:var(--ink-2);font-size:.95rem;max-width:60ch}
+  .incidents small{display:block;margin-top:6px;font-size:.76rem;font-weight:700;color:var(--ink-2)}
+  .proof-close{margin-top:24px;font-weight:700;max-width:44em;line-height:1.5}
+  .js .incidents li,.js .anode,.js .vcard,.js .dcard{opacity:0}
+
+  /* ===== attacks: a threat matrix ===== */
+  .threats{margin-top:clamp(40px,6vw,72px)}
+  .threats-head,.threat{display:grid;grid-template-columns:46px minmax(0,1fr) clamp(180px,22vw,260px);
+       gap:clamp(14px,2.5vw,28px);align-items:center}
+  .threats-head{padding-bottom:12px}
+  .chain-head{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+  .chain-head i{font-style:normal;font-size:.7rem;font-weight:700;color:var(--ink);text-align:center;
+                letter-spacing:.02em;line-height:1.2;padding-bottom:6px;border-bottom:2px solid var(--sand-2)}
+  .chain-key{grid-column:2;justify-self:end;text-align:right;font-size:.8rem;color:var(--ink-2);font-weight:600}
+  .threat{padding:clamp(18px,2.6vw,26px) 0;border-top:1px solid var(--sand);position:relative}
+  .threat::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--ink);
+                 transform:scaleX(0);transform-origin:0 50%;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .threat:hover::after{transform:scaleX(1)}
+  .t-id{font-weight:800;font-size:.95rem;color:var(--sand-2);font-variant-numeric:tabular-nums;align-self:start}
+  .threat:hover .t-id{color:var(--ink)}
+  .t-body h3{font-size:clamp(1.1rem,1.7vw,1.35rem);font-weight:800;letter-spacing:-0.02em;line-height:1.15}
+  .t-body p{margin-top:6px;color:var(--ink-2);font-size:.98rem;max-width:44ch}
+  .chain{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+  .chain .cell{display:block;height:30px;border-radius:3px;background:var(--sand);
+               transform-origin:50% 100%}
+  .chain .cell.hit{background:var(--clay)}
+  .threats{border-bottom:2px solid var(--ink)}
+  @media (max-width:760px){
+    .threats-head{grid-template-columns:34px minmax(0,1fr);row-gap:8px;padding-bottom:14px}
+    .threats-head .chain-key{grid-column:2;justify-self:start;text-align:left}
+    .threats-head .chain-head{grid-column:2}
+    .chain-head i{font-size:.62rem}
+    .threat{grid-template-columns:34px minmax(0,1fr);row-gap:14px}
+    .threat .chain{grid-column:2}
+    .chain .cell{height:24px}
+  }
+
+  /* ===== plan: a schedule, running downward ===== */
+  .gantt{margin-top:clamp(40px,6vw,72px);--bw:clamp(13px,1.6vw,22px)}
+  .vg-head,.vg-body{display:grid;
+    grid-template-columns:clamp(52px,6vw,74px) minmax(0,1fr) clamp(118px,17vw,210px);
+    gap:clamp(10px,1.6vw,20px)}
+  .vg-head{align-items:end;margin-bottom:12px}
+  .vg-names{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(5px,1vw,12px)}
+  .vg-names i{writing-mode:vertical-rl;transform:rotate(180deg);justify-self:center;
+              font-style:normal;font-size:clamp(.66rem,1vw,.78rem);font-weight:700;
+              letter-spacing:-0.01em;white-space:nowrap;line-height:1}
+  .vg-shiphead{align-self:end;font-size:clamp(.72rem,1vw,.82rem);font-weight:700;color:var(--ink-2)}
+  .vg-body{height:clamp(280px,32vw,360px)}
+  .vg-axis{display:grid;grid-template-rows:repeat(4,1fr)}
+  .vg-axis i{font-style:normal;font-size:clamp(.7rem,1vw,.8rem);font-weight:700;color:var(--ink-2);
+             border-top:1px solid var(--sand);padding-top:7px}
+  .vg-cols{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(5px,1vw,12px)}
+  .vg-col{position:relative;border-bottom:1px solid var(--sand);
+          background:linear-gradient(var(--sand) 0 1px,transparent 1px) 0 0/100% 25%}
+  .vg-bar{position:absolute;left:50%;width:var(--bw);margin-left:calc(var(--bw) / -2);
+          border-radius:999px;background:var(--ink);
+          top:calc(var(--s) / 4 * 100%);height:calc((var(--e) - var(--s)) / 4 * 100%);
+          transform-origin:50% 0}
+  .vg-ships{position:relative}
+  .vship{position:absolute;left:0;right:0;top:calc(var(--at) / 4 * 100%);transform:translateY(-50%);
+         display:flex;align-items:center;gap:9px}
+  .vship:last-child{transform:translateY(-100%)}
+  .vship i{flex:0 0 auto;width:12px;height:12px;background:var(--orange);transform:rotate(45deg);border-radius:2px}
+  .vship em{font-style:normal;font-size:clamp(.7rem,1vw,.8rem);font-weight:700;color:var(--olive);line-height:1.3}
+
+  /* ===== roles: the crew ===== */
+  .crew{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,3vw,44px);margin-top:clamp(40px,6vw,72px)}
+  .crew-h{display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:700;color:var(--ink-2);
+          padding-bottom:14px;border-bottom:2px solid var(--ink);margin-bottom:14px;letter-spacing:.01em}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+  .dot.build{background:var(--sage)} .dot.shape{background:var(--olive)}
+  .seat{border:1px solid var(--sand);border-radius:10px;background:var(--surface);margin-bottom:12px;
+        transition:border-color .3s,box-shadow .3s,transform .3s}
+  .seat:hover{border-color:var(--sand-2);box-shadow:0 10px 26px rgba(23,23,23,.05);transform:translateY(-2px)}
+  .seat-head{all:unset;box-sizing:border-box;display:grid;grid-template-columns:auto 1fr auto auto;
+             gap:8px 12px;align-items:center;width:100%;padding:clamp(16px,2.4vw,20px);cursor:pointer}
+  .seat-head:focus-visible{outline:2px solid var(--olive);outline-offset:3px;border-radius:10px}
+  .seat-n{font-weight:800;font-size:.8rem;color:var(--sand-2);font-variant-numeric:tabular-nums}
+  .seat-role{font-weight:800;font-size:clamp(1rem,1.5vw,1.2rem);letter-spacing:-0.02em;line-height:1.15}
+  .seat-n{grid-column:1;grid-row:1}
+  .seat-role{grid-column:2;grid-row:1}
+  .seat-status{grid-column:3;grid-row:1;font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;
+               background:var(--sand);color:var(--ink-2);letter-spacing:.02em}
+  .seat-status.filled{background:var(--sage-2);color:var(--olive)}
+  .seat-more{grid-column:4;grid-row:1;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--sand-2);display:grid;place-items:center;
+             transition:transform .4s cubic-bezier(.2,.8,.2,1),background .25s}
+  .seat-more svg{width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none}
+  .seat-head[aria-expanded="true"] .seat-more{transform:rotate(135deg);background:var(--sand)}
+  .seat-line{grid-column:2 / -1;grid-row:2;color:var(--ink-2);font-size:.94rem;line-height:1.45}
+  .seat-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.8,.2,1)}
+  .seat-body > div{overflow:hidden}
+  .seat-head[aria-expanded="true"] + .seat-body{grid-template-rows:1fr}
+  .seat-inner{padding:0 clamp(16px,2.4vw,20px) clamp(18px,2.4vw,22px)}
+  .seat-inner p{color:var(--ink-2);font-size:.95rem;margin-bottom:12px}
+  .seat-inner p strong{color:var(--ink);font-weight:700}
+  .seat-inner .btn{padding:11px 20px;font-size:.92rem;margin-top:4px}
+  .seat.taken{background:var(--ink);border-color:var(--ink)}
+  .seat.taken .seat-role{color:var(--bg)}
+  .seat.taken .seat-n{color:#6E6E73}
+  .seat.taken .seat-line{color:var(--yellow)}
+  .seat.taken .seat-more{border-color:#333333;color:var(--bg)}
+  .seat.taken .seat-head[aria-expanded="true"] .seat-more{background:#262626}
+  .seat.taken .seat-inner p{color:#A9A9AE}
+  .seat.taken .seat-inner p strong{color:var(--bg)}
+  @media (max-width:820px){.crew{grid-template-columns:1fr;gap:28px}}
+  .js .threat,.js .vg-names i,.js .vg-axis i,.js .vship,.js .seat,.js .crew-h{opacity:0}
+
+  footer{background:var(--ink);color:var(--bg);padding-block:clamp(72px,10vw,120px) clamp(56px,7vw,80px);text-align:center}
+  footer .wrap{display:flex;flex-direction:column;align-items:center;gap:22px}
+  footer p{color:#A9A9AE;max-width:32em;margin:0}
+  .foot-link{display:none}
+  .flipwrap{display:inline-block;width:clamp(150px,20vw,220px)}
+  .markflip{width:100%;height:auto;display:block;overflow:visible}
+  .e-ring{transform-box:view-box;transform-origin:141px 115px;animation:e-ring 4s cubic-bezier(.7,0,.3,1) infinite}
+  .e-front{transform-box:view-box;transform-origin:141.5px 115px;animation:e-front 4s infinite}
+  .e-back{transform-box:view-box;transform-origin:141.5px 115px;transform:scale(0,1);animation:e-back 4s infinite}
+  @keyframes e-front{0%,20%{transform:scale(1,1);animation-timing-function:cubic-bezier(.55,0,1,.45)}32%{transform:scale(0,1.08)}82%{transform:scale(0,1.08);animation-timing-function:cubic-bezier(0,.55,.45,1)}94%,100%{transform:scale(1,1)}}
+  @keyframes e-back{0%,32%{transform:scale(0,1.08);animation-timing-function:cubic-bezier(0,.55,.45,1)}44%{transform:scale(1,1)}70%{transform:scale(1,1);animation-timing-function:cubic-bezier(.55,0,1,.45)}82%,100%{transform:scale(0,1.08)}}
+  @keyframes e-ring{0%,20%{transform:rotate(0deg)}44%,70%{transform:rotate(90deg)}94%,100%{transform:rotate(0deg)}}
+  @media (prefers-reduced-motion:reduce){.e-ring,.e-front,.e-back{animation:none}.e-back{display:none}}
+  .ticker{margin-top:clamp(56px,7vw,88px);border-top:1px solid #262626;padding-top:clamp(28px,4vw,40px)}
+  .tk-row{overflow:hidden;padding:10px 0;
+          -webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+  .tk-track{display:flex;align-items:center;width:max-content;gap:clamp(22px,3vw,40px);
+            animation:tk 46s linear infinite;will-change:transform}
+  .tk-row.rev .tk-track{animation-direction:reverse;animation-duration:58s}
+  .tk-row:hover .tk-track{animation-play-state:paused}
+  .tk-item{font-weight:800;font-size:clamp(1.05rem,2vw,1.5rem);letter-spacing:-0.02em;color:#F2F2F3;white-space:nowrap}
+  .tk-row.rev .tk-item{color:#8A8A8F}
+  .tk-sep{width:8px;height:8px;background:var(--orange);transform:rotate(45deg);border-radius:1.5px;flex:0 0 auto}
+  .tk-row.rev .tk-sep{background:#3A3A3A}
+  .tk-note{margin:22px auto 0;padding-inline:var(--pad);font-size:.78rem;color:#6E6E73;text-align:center}
+  @keyframes tk{to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.tk-track{animation:none}}
+
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+   <div class="navbar">
+    <a class="wordmark" href="#top" aria-label="moat, back to top"><svg class="mark" viewBox="69 43 144 144" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g class="mark-ring">
+          <g fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round">
+            <path d="M117 52.4 A67 67 0 0 1 202.7 141.2"/>
+            <path d="M177.5 171.2 A67 67 0 0 1 86.1 76.6"/>
+          </g>
+          <g fill="currentColor"><circle cx="99.7" cy="62.2" r="11"/><circle cx="192.3" cy="158.1" r="11"/></g>
+        </g>
+        <path fill="currentColor" fill-rule="evenodd" d="M110 90 H173 A7 7 0 0 1 180 97 V133 A7 7 0 0 1 173 140 H110 A7 7 0 0 1 103 133 V97 A7 7 0 0 1 110 90 Z M115 105 H123 A2 2 0 0 1 125 107 V112 A2 2 0 0 1 123 114 H115 A2 2 0 0 1 113 112 V107 A2 2 0 0 1 115 105 Z"/>
+      </svg><span class="vh">moat</span></a>
+    <ul class="nav-links">
+      <li><a href="#product">Product</a></li>
+      <li><a href="#attacks">Attacks</a></li>
+      <li><a href="#plan">The plan</a></li>
+      <li><a href="#roles">Roles</a></li>
+    </ul>
+    <span class="nav-tag">Thirduni, autumn 2026</span>
+   </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>
+          <span class="line"><span class="line-inner">Agents are about to</span></span>
+          <span class="line"><span class="line-inner">spend real money.</span></span>
+          <span class="line"><span class="line-inner">We watch the decision.</span></span>
+        </h1>
+        <p class="lede">Moat is the risk layer for AI agent payments. It sits in front of the mandate and asks the question the rails don't: was this decision the user's, or the attacker's?</p>
+        <div class="cta-row">
+          <a class="btn" href="#product">See the product</a>
+          <a class="textlink" href="#roles">See the open roles</a>
+        </div>
+      </div>
+      <div class="hero-fig" aria-hidden="true">
+        <svg class="proof" viewBox="0 0 306 300" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(0,35)">
+            <g class="lg-arcs" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round">
+              <path class="lg-arc" pathLength="100" d="M117 52.4 A67 67 0 0 1 202.7 141.2"/>
+              <path class="lg-arc" pathLength="100" d="M177.5 171.2 A67 67 0 0 1 86.1 76.6"/>
+            </g>
+            <path class="lg-full" pathLength="100" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round"
+                  d="M99.7 62.2 A67 67 0 1 1 182.3 167.8 A67 67 0 1 1 99.7 62.2"/>
+            <g fill="#111111">
+              <circle class="lg-dot" cx="99.7" cy="62.2" r="11"/>
+              <circle class="lg-dot" cx="192.3" cy="158.1" r="11"/>
+            </g>
+            <path class="lg-card" fill="#111111" fill-rule="evenodd" d="M110 90 H173 A7 7 0 0 1 180 97 V133 A7 7 0 0 1 173 140 H110 A7 7 0 0 1 103 133 V97 A7 7 0 0 1 110 90 Z M115 105 H123 A2 2 0 0 1 125 107 V112 A2 2 0 0 1 123 114 H115 A2 2 0 0 1 113 112 V107 A2 2 0 0 1 115 105 Z"/>
+          </g>
+          <g class="lg-tok">
+            <rect x="-29" y="-12" width="58" height="24" rx="6" fill="#111111"/>
+            <rect class="lg-stripe" x="-24" y="-7" width="5.5" height="14" rx="2.75" fill="#00A650"/>
+            <text x="7" y="5" text-anchor="middle">$480</text>
+          </g>
+          <circle class="lg-splash" cx="0" cy="0" r="16" fill="none" stroke="#EB001B" stroke-width="2"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="creed" id="thesis">
+    <div class="wrap">
+
+      <div class="creed-line">
+        <svg class="glyph" viewBox="0 0 120 60" aria-hidden="true">
+          <line class="g-rail" x1="6" y1="22" x2="114" y2="22"/>
+          <line class="g-rail" x1="6" y1="38" x2="114" y2="38"/>
+          <line class="g-tie" x1="24" y1="16" x2="24" y2="44"/>
+          <line class="g-tie" x1="48" y1="16" x2="48" y2="44"/>
+          <line class="g-tie" x1="72" y1="16" x2="72" y2="44"/>
+          <line class="g-tie" x1="96" y1="16" x2="96" y2="44"/>
+        </svg>
+        <p>Everyone is building the rails.</p>
+      </div>
+
+      <div class="creed-line">
+        <svg class="glyph" viewBox="0 0 120 60" aria-hidden="true">
+          <line class="g-post" x1="18" y1="12" x2="18" y2="48"/>
+          <line class="g-post" x1="102" y1="12" x2="102" y2="48"/>
+          <rect class="g-barL" x="18" y="24" width="42" height="10" rx="5"/>
+          <rect class="g-barR" x="60" y="24" width="42" height="10" rx="5"/>
+        </svg>
+        <p>The rail owners are building the controls.</p>
+      </div>
+
+      <div class="creed-line">
+        <svg class="glyph" viewBox="0 0 120 60" aria-hidden="true">
+          <circle class="g-empty" cx="60" cy="30" r="22"/>
+        </svg>
+        <p>The fraud layer has no owner.</p>
+      </div>
+
+      <div class="creed-line is-last">
+        <svg class="glyph" viewBox="0 0 120 60" aria-hidden="true">
+          <circle class="g-fill" cx="60" cy="30" r="22"/>
+          <circle class="g-core" cx="60" cy="30" r="7"/>
+        </svg>
+        <p>That is the gap Moat fills.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="pillars-sec" id="how">
+    <div class="wrap">
+      <h2 class="section-h">What Moat actually checks.</h2>
+      <p class="section-lede">Three questions the payment rails never ask.</p>
+      <div class="pillars">
+        <div class="pillar">
+          <svg class="mini" viewBox="0 0 340 150" aria-hidden="true">
+            <g class="prov-box"><rect x="10" y="20" width="60" height="26" rx="4" fill="#FEF3E0"/><text x="40" y="37" text-anchor="middle">task</text></g>
+            <g class="prov-box"><rect x="10" y="56" width="60" height="26" rx="4" fill="#FDE7E9"/><text x="40" y="73" text-anchor="middle">page</text></g>
+            <g class="prov-box"><rect x="10" y="92" width="60" height="26" rx="4" fill="#FEF3E0"/><text x="40" y="109" text-anchor="middle">cap</text></g>
+            <path class="prov-line" d="M70 69 C140 69 160 90 220 90" fill="none" stroke="#EB001B" stroke-width="2"/>
+            <rect x="220" y="72" width="110" height="36" rx="4" fill="none" stroke="#C7C7CC" stroke-width="1.5"/>
+            <text x="275" y="94" text-anchor="middle">payee field</text>
+            <g class="prov-stop"><circle cx="220" cy="90" r="13" fill="#FFFFFF" stroke="#EB001B" stroke-width="2"/><path d="M214 84 L226 96 M226 84 L214 96" stroke="#EB001B" stroke-width="2"/></g>
+          </svg>
+          <h3>Provenance</h3>
+          <p>Every payment parameter carries a label saying where it came from. If the payee or the amount was derived from a web page, an email or a tool result, Moat blocks the authorisation before the attack is even understood.</p>
+        </div>
+        <div class="pillar">
+          <svg class="mini" viewBox="0 0 340 150" aria-hidden="true">
+            <line x1="10" y1="110" x2="330" y2="110" stroke="#C7C7CC" stroke-width="1.5"/>
+            <g class="beh-normal" stroke="#F79E1B" stroke-width="3">
+              <line x1="30" y1="110" x2="30" y2="80"/><line x1="70" y1="110" x2="70" y2="80"/><line x1="105" y1="110" x2="105" y2="80"/><line x1="150" y1="110" x2="150" y2="80"/>
+            </g>
+            <g class="beh-burst" stroke="#EB001B" stroke-width="3">
+              <line x1="200" y1="110" x2="200" y2="60"/><line x1="208" y1="110" x2="208" y2="60"/><line x1="216" y1="110" x2="216" y2="60"/><line x1="224" y1="110" x2="224" y2="60"/><line x1="232" y1="110" x2="232" y2="60"/><line x1="240" y1="110" x2="240" y2="60"/><line x1="248" y1="110" x2="248" y2="60"/><line x1="256" y1="110" x2="256" y2="60"/><line x1="264" y1="110" x2="264" y2="60"/>
+            </g>
+            <g class="beh-flag"><path d="M194 48 H270" stroke="#111111" stroke-width="2"/><text x="232" y="38" text-anchor="middle" fill="#111111">machine speed</text></g>
+            <text x="90" y="135" text-anchor="middle">normal cadence</text>
+          </svg>
+          <h3>Behaviour</h3>
+          <p>Fraud rules were tuned to human tempo. Moat fingerprints how an agent normally works, call by call, and flags the trace that doesn't look like it, at the speed agents actually operate.</p>
+        </div>
+        <div class="pillar">
+          <svg class="mini" viewBox="0 0 340 150" aria-hidden="true">
+            <g class="ev-card"><rect x="22" y="6" width="120" height="76" rx="4" fill="#FFFFFF" stroke="#C7C7CC" stroke-width="1.5"/></g>
+            <g class="ev-card"><rect x="36" y="16" width="120" height="76" rx="4" fill="#FFFFFF" stroke="#C7C7CC" stroke-width="1.5"/></g>
+            <g class="ev-card"><rect x="50" y="26" width="120" height="76" rx="4" fill="#FFFFFF" stroke="#C7C7CC" stroke-width="1.5"/><text x="110" y="69" text-anchor="middle">action</text></g>
+            <text x="96" y="130" text-anchor="middle">mandate, context, action</text>
+            <g class="ev-seal" transform="translate(250 70) scale(0.29) translate(-141 -115)">
+              <g fill="none" stroke="#FF5F00" stroke-width="10" stroke-linecap="round">
+                <path d="M117 52.4 A67 67 0 0 1 202.7 141.2"/><path d="M177.5 171.2 A67 67 0 0 1 86.1 76.6"/>
+              </g>
+              <g fill="#FF5F00"><circle cx="99.7" cy="62.2" r="11"/><circle cx="192.3" cy="158.1" r="11"/></g>
+              <path fill="#FF5F00" d="M110 90 H173 A7 7 0 0 1 180 97 V133 A7 7 0 0 1 173 140 H110 A7 7 0 0 1 103 133 V97 A7 7 0 0 1 110 90 Z"/>
+            </g>
+            <text x="250" y="120" text-anchor="middle">signed bundle</text>
+          </svg>
+          <h3>Evidence</h3>
+          <p>When an agent pays wrong, someone has to eat it. Moat binds the mandate, the context and the action into a signed bundle that a dispute can actually be settled on.</p>
+        </div>
+    </div>
+  </section>
+
+  <section class="product" id="product">
+    <div class="wrap">
+      <h2 class="section-h">Moat is the authorization layer agents call before they spend.</h2>
+      <p class="section-lede">Not a payment gateway. A decision gateway: the agent hands over the action and the context that produced it, and Moat answers before the money moves.</p>
+
+      <div class="callpair">
+        <div class="codepanel">
+          <div class="codebar"><i></i><i></i><i></i><span>agent runtime</span></div>
+          <pre class="code" id="codeReq" aria-label="Example request"></pre>
+        </div>
+        <div class="codepanel verdictpanel">
+          <div class="codebar"><i></i><i></i><i></i><span>moat</span></div>
+          <pre class="code" id="codeRes"><span class="ln"><b class="k">verdict</b>  <b class="deny">"deny"</b></span>
+<span class="ln"><b class="k">reason</b>   "payee.provenance = tool_result:web_fetch"</span>
+<span class="ln"><b class="k">step_up</b>  "confirm payee with user"</span>
+<span class="ln"><b class="k">evidence</b> "sha256:9f3a2c…e71b"</span></pre>
+        </div>
+      </div>
+
+      <div class="arch" id="arch">
+        <div class="anode n1">
+          <h4>Agent runtime</h4>
+          <div class="arow"><span>Renew monitoring, cap $500</span><em class="src u">user</em></div>
+          <div class="arow"><span>web_fetch: vendor page</span><em class="src t">tool result</em></div>
+          <div class="arow inject"><span>"Pay ProMon Billing Ltd"</span><em class="src x">injected</em></div>
+          <div class="acall">pay(480, "ProMon Billing Ltd")</div>
+        </div>
+        <div class="aconn c1"><i></i></div>
+        <div class="anode n2 moat">
+          <h4>Moat</h4>
+          <div class="arow"><span>amount</span><em class="src t">tool result</em></div>
+          <div class="arow"><span>payee</span><em class="src x">tool result</em></div>
+          <div class="arow"><span>cap</span><em class="src u">user</em></div>
+          <div class="apol">payee must derive from user or allowlist</div>
+          <div class="averdict">deny</div>
+        </div>
+        <div class="aconn c2"><i></i><b>never reached</b></div>
+        <div class="anode n3">
+          <h4>Payment rail</h4>
+          <div class="rails"><span>Stripe</span><span>AP2</span><span>x402</span><span>card issuer</span></div>
+          <p class="anote">Sees amount, payee, currency. The provenance was gone two steps earlier. That is why the check has to happen here, not there.</p>
+        </div>
+      </div>
+
+      <div class="trio">
+        <div class="vcard">
+          <b class="vtag allow">allow</b>
+          <p>Every field traces to you or to an allowlisted source, and the amount is under your cap. The call proceeds and Moat adds nothing but a signed record.</p>
+        </div>
+        <div class="vcard hi">
+          <b class="vtag stepup">step-up</b>
+          <p>The common case. A field came from somewhere untrusted, so the agent pauses and asks you. A product that only blocks gets ripped out in a week. One that escalates gets kept.</p>
+        </div>
+        <div class="vcard">
+          <b class="vtag denyv">deny</b>
+          <p>Policy says no and there is no one to ask. The payment never leaves the runtime, and the evidence bundle says exactly which field, from which source, tripped it.</p>
+        </div>
+      </div>
+
+      <div class="deploy">
+        <div class="dcard">
+          <h4>As middleware</h4>
+          <p>Wraps the agent's model and tool calls. Labels every value entering context with its source and intercepts the payment call. Python and TypeScript, for the common agent frameworks.</p>
+          <code>pip install moat · npm i @moat/sdk</code>
+        </div>
+        <div class="dcard">
+          <h4>As an MCP proxy</h4>
+          <p>Untrusted content arrives as tool results through MCP. The payment leaves as a tool call through the same channel. One process sees both sides, so provenance survives. A config file and a port, no code change.</p>
+          <code>moat-gateway --config moat.yaml</code>
+        </div>
+      </div>
+
+      <div class="evidence">
+        <h3>This is not hypothetical.</h3>
+        <p class="proof-lede">The payment version stopped being a thought experiment this year. Attackers are already targeting agents that can spend. What does not exist yet is a benchmark that measures it and a control that stops it.</p>
+        <ol class="incidents">
+          <li><time>Jul 2026</time><div><strong>Agents tricked into paying, in the wild</strong><span>Two live campaigns used SEO-poisoned search results and hidden prompts on malicious sites to steer browsing agents into cryptocurrency payments and fraudulent platforms.</span><small>Zscaler, via SecurityWeek</small></div></li>
+          <li><time>Feb 2026</time><div><strong>Payment payloads planted in web content</strong><span>Google researchers measured a 32 percent rise in malicious injection payloads on the open web over three months, including complete PayPal transaction specs written for agents with payment capability.</span><small>Google, reported May 2026</small></div></li>
+          <li><time>Mar 2026</time><div><strong>LiteLLM backdoored on PyPI</strong><span>The gateway package used by CrewAI, DSPy and Microsoft GraphRAG shipped an autonomous attack bot for three hours. About 47,000 downloads in the window.</span><small>OWASP, via Help Net Security</small></div></li>
+          <li><time>Jun 2026</time><div><strong>OWASP moves from threats to breach reports</strong><span>The 2025 State of Agentic AI Security catalogued plausible threats. The 2026 edition catalogues CVEs, vendor advisories and breaches in nearly every category. Prompt injection is still number one.</span><small>OWASP GenAI Security Project</small></div></li>
+          <li><time>Dec 2025</time><div><strong>Agent Goal Hijack becomes a named class</strong><span>OWASP's Top 10 for Agentic Applications lists it as ASI01, peer-reviewed by NIST, the Microsoft AI Red Team and AWS. Hidden instructions in a page, a document or a tool output redirect what the agent does.</span><small>OWASP</small></div></li>
+          <li><time>Jun 2025</time><div><strong>EchoLeak, CVE-2025-32711</strong><span>Where it started. One crafted email. Microsoft 365 Copilot exfiltrated OneDrive, SharePoint and Teams data with zero clicks. CVSS 9.3.</span><small>Aim Security</small></div></li>
+        </ol>
+        <p class="proof-close">Every one of these is the same shape: private access, untrusted content, an outbound channel. In 2025 the channel was data. In 2026 it is money. The rails still check the amount. Nobody is checking where the payee came from.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="attacks" id="attacks">
+    <div class="wrap">
+      <h2 class="section-h">The attacks we're naming first.</h2>
+      <p class="section-lede">Six classes, each with a reproducible demonstration. The strip on the right marks the stage of the payment where the attack actually lands.</p>
+
+      <div class="threats">
+        <div class="threats-head">
+          <span></span>
+          <span class="chain-key">Red marks the stage of the payment where the attack lands</span>
+          <div class="chain-head"><i>intent</i><i>mandate</i><i>plan</i><i>action</i><i>settle</i></div>
+        </div>
+        <article class="threat">
+          <span class="t-id">01</span>
+          <div class="t-body"><h3>Injection to purchase</h3><p>A page the agent reads tells it to buy something. It does.</p></div>
+          <div class="chain" role="img" aria-label="strikes at plan"><i class="cell"></i><i class="cell"></i><i class="cell hit"></i><i class="cell"></i><i class="cell"></i></div>
+        </article>
+        <article class="threat">
+          <span class="t-id">02</span>
+          <div class="t-body"><h3>Mandate replay</h3><p>A valid authorisation, used again where it was never meant to apply.</p></div>
+          <div class="chain" role="img" aria-label="strikes at mandate"><i class="cell"></i><i class="cell hit"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i></div>
+        </article>
+        <article class="threat">
+          <span class="t-id">03</span>
+          <div class="t-body"><h3>Merchant spoofing</h3><p>The right product, the right price, the wrong recipient.</p></div>
+          <div class="chain" role="img" aria-label="strikes at action"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell hit"></i><i class="cell"></i></div>
+        </article>
+        <article class="threat">
+          <span class="t-id">04</span>
+          <div class="t-body"><h3>Machine-speed velocity</h3><p>Fifty thousand payments under the cap. The cap was written for a person.</p></div>
+          <div class="chain" role="img" aria-label="strikes at action, settle"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell hit"></i><i class="cell hit"></i></div>
+        </article>
+        <article class="threat">
+          <span class="t-id">05</span>
+          <div class="t-body"><h3>Adversarial merchants</h3><p>Seller agents that manipulate buyer agents through the listing itself.</p></div>
+          <div class="chain" role="img" aria-label="strikes at plan"><i class="cell"></i><i class="cell"></i><i class="cell hit"></i><i class="cell"></i><i class="cell"></i></div>
+        </article>
+        <article class="threat">
+          <span class="t-id">06</span>
+          <div class="t-body"><h3>Budget-drain loops</h3><p>Two agents paying each other in circles until the wallet is empty.</p></div>
+          <div class="chain" role="img" aria-label="strikes at settle"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell hit"></i></div>
+        </article>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="plan" id="plan">
+    <div class="wrap">
+      <h2 class="section-h">What we publish, and when.</h2>
+      <p class="section-lede">Four weeks, four artefacts: a public arena, an attack corpus, measured results, and a paper. Every run reproducible from the repo, every number published with its false-positive and latency cost.</p>
+
+      <div class="gantt">
+        <div class="vg-head">
+          <span></span>
+          <div class="vg-names">
+          <i>Arena and sandboxes</i>
+          <i>Attack corpus</i>
+          <i>Defence iterations</i>
+          <i>Measurement runs</i>
+          <i>Paper and disclosure</i>
+          </div>
+          <span class="vg-shiphead">Shipped</span>
+        </div>
+
+        <div class="vg-body">
+          <div class="vg-axis"><i>Week 1</i><i>Week 2</i><i>Week 3</i><i>Week 4</i></div>
+          <div class="vg-cols">
+          <div class="vg-col"><span class="vg-bar" style="--s:0.0;--e:1.8"></span></div>
+          <div class="vg-col"><span class="vg-bar" style="--s:1.4;--e:3.0"></span></div>
+          <div class="vg-col"><span class="vg-bar" style="--s:1.6;--e:3.4"></span></div>
+          <div class="vg-col"><span class="vg-bar" style="--s:2.6;--e:4.0"></span></div>
+          <div class="vg-col"><span class="vg-bar" style="--s:2.9;--e:4.0"></span></div>
+          </div>
+          <div class="vg-ships">
+          <span class="vship" style="--at:1.0"><i></i><em>Arena live</em></span>
+          <span class="vship" style="--at:2.0"><i></i><em>Corpus frozen</em></span>
+          <span class="vship" style="--at:3.0"><i></i><em>Results in</em></span>
+          <span class="vship" style="--at:4.0"><i></i><em>Paper and the number</em></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="roles" id="roles">
+    <div class="wrap">
+      <h2 class="section-h">Six seats at the table. Five are open.</h2>
+      <p class="section-lede">Three build the system, three shape the work. Both are load-bearing: the paper and the demo are half the product.</p>
+
+      <div class="crew">
+        <div class="crew-col">
+          <h3 class="crew-h"><i class="dot build"></i>Build the system</h3>
+          <article class="seat">
+            <button class="seat-head" aria-expanded="false" aria-controls="seat1">
+              <span class="seat-n">01</span>
+              <span class="seat-role">Backend Engineer</span>
+              <span class="seat-status">open</span>
+              <span class="seat-line">You've deployed something real and flaky APIs don't scare you.</span>
+              <span class="seat-more"><svg viewBox="0 0 14 14"><path d="M7 1v12M1 7h12"/></svg></span>
+            </button>
+            <div class="seat-body" id="seat1"><div><div class="seat-inner">
+              <p><strong>You'll own</strong> the arena: the simulated marketplace, the card-issuing and agent-framework sandboxes, and the system that makes every run reproducible.</p>
+              <p><strong>Bring</strong> Docker, a backend language you're fast in, and one thing you shipped that people used.</p>
+              <a class="btn" href="mailto:nadjisabri@gmail.com?subject=Moat%20%E2%80%94%20Backend%20Engineer">Apply for this seat</a>
+            </div></div></div>
+          </article>
+          <article class="seat">
+            <button class="seat-head" aria-expanded="false" aria-controls="seat2">
+              <span class="seat-n">02</span>
+              <span class="seat-role">Security Engineer</span>
+              <span class="seat-status">open</span>
+              <span class="seat-line">You find the way in before anyone else sees the door.</span>
+              <span class="seat-more"><svg viewBox="0 0 14 14"><path d="M7 1v12M1 7h12"/></svg></span>
+            </button>
+            <div class="seat-body" id="seat2"><div><div class="seat-inner">
+              <p><strong>You'll own</strong> the attack corpus: the first thirty attacks, then the open security challenge: curating submissions, scoring them, feeding the taxonomy.</p>
+              <p><strong>Bring</strong> adversarial instinct over raw coding ability. The interview is you breaking something in front of us.</p>
+              <a class="btn" href="mailto:nadjisabri@gmail.com?subject=Moat%20%E2%80%94%20Security%20Engineer">Apply for this seat</a>
+            </div></div></div>
+          </article>
+          <article class="seat">
+            <button class="seat-head" aria-expanded="false" aria-controls="seat3">
+              <span class="seat-n">03</span>
+              <span class="seat-role">Data Analyst</span>
+              <span class="seat-status">open</span>
+              <span class="seat-line">You'd rather report a bad number than a fake good one.</span>
+              <span class="seat-more"><svg viewBox="0 0 14 14"><path d="M7 1v12M1 7h12"/></svg></span>
+            </button>
+            <div class="seat-body" id="seat3"><div><div class="seat-inner">
+              <p><strong>You'll own</strong> the scoring harness, the metrics, and the two tables the project rests on: bypass rate per control layer, and Moat's false-positive and latency cost.</p>
+              <p><strong>Bring</strong> rigour and Python. You don't need to be a backend engineer.</p>
+              <a class="btn" href="mailto:nadjisabri@gmail.com?subject=Moat%20%E2%80%94%20Data%20Analyst">Apply for this seat</a>
+            </div></div></div>
+          </article>
+        </div>
+
+        <div class="crew-col">
+          <h3 class="crew-h"><i class="dot shape"></i>Shape the work</h3>
+          <article class="seat">
+            <button class="seat-head" aria-expanded="false" aria-controls="seat4">
+              <span class="seat-n">04</span>
+              <span class="seat-role">Research Analyst</span>
+              <span class="seat-status">open</span>
+              <span class="seat-line">Finance, law or economics, and you can actually write.</span>
+              <span class="seat-more"><svg viewBox="0 0 14 14"><path d="M7 1v12M1 7h12"/></svg></span>
+            </button>
+            <div class="seat-body" id="seat4"><div><div class="seat-inner">
+              <p><strong>You'll own</strong> the paper: the literature, the attack taxonomy as a document, and the dispute and liability analysis across US, EU and Gulf rules.</p>
+              <p><strong>Bring</strong> a fraud mind. A banking or compliance background will think of attacks a CS student never will.</p>
+              <a class="btn" href="mailto:nadjisabri@gmail.com?subject=Moat%20%E2%80%94%20Research%20Analyst">Apply for this seat</a>
+            </div></div></div>
+          </article>
+          <article class="seat">
+            <button class="seat-head" aria-expanded="false" aria-controls="seat5">
+              <span class="seat-n">05</span>
+              <span class="seat-role">Product Designer</span>
+              <span class="seat-status">open</span>
+              <span class="seat-line">Your portfolio is the whole interview.</span>
+              <span class="seat-more"><svg viewBox="0 0 14 14"><path d="M7 1v12M1 7h12"/></svg></span>
+            </button>
+            <div class="seat-body" id="seat5"><div><div class="seat-inner">
+              <p><strong>You'll own</strong> the leaderboard, the results visualisation, the demo flow, and the identity. This is what judges and mentors actually see.</p>
+              <p><strong>Bring</strong> taste and restraint. A clean arena with legible results reads as a serious project; a raw repo reads as a student one.</p>
+              <a class="btn" href="mailto:nadjisabri@gmail.com?subject=Moat%20%E2%80%94%20Product%20Designer">Apply for this seat</a>
+            </div></div></div>
+          </article>
+          <article class="seat taken">
+            <button class="seat-head" aria-expanded="false" aria-controls="seat6">
+              <span class="seat-n">06</span>
+              <span class="seat-role">Project Manager</span>
+              <span class="seat-status filled">filled</span>
+              <span class="seat-line">Nadji Sabri Khentit</span>
+              <span class="seat-more"><svg viewBox="0 0 14 14"><path d="M7 1v12M1 7h12"/></svg></span>
+            </button>
+            <div class="seat-body" id="seat6"><div><div class="seat-inner">
+              <p><strong>Owns</strong> the schedule, the security challenge logistics, sandbox access from the spend-control companies, disclosure correspondence, mentor time, and the record of who contributed what.</p>
+              <p>Banking Management degree, then a year as a research analyst in the digital transformation unit of an Algerian state bank, rotating through deposits, transfers and asset management. Bloomberg BMC, BFF and ESG; CFI fixed income, equity and FX.</p>
+              <p>Runs a software company that has shipped asset management tooling for the European market, escrow infrastructure for Algeria and payments for the GCC. Co-founder of a conversational AI product, a full ecosystem built around it.</p>
+            </div></div></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="flipwrap" aria-hidden="true">
+      <svg class="markflip" viewBox="60 34 162 162" xmlns="http://www.w3.org/2000/svg">
+        <g class="e-ring">
+          <g fill="none" stroke="#FF5F00" stroke-width="10" stroke-linecap="round"><path d="M117 52.4 A67 67 0 0 1 202.7 141.2"/><path d="M177.5 171.2 A67 67 0 0 1 86.1 76.6"/></g>
+          <g><circle cx="99.7" cy="62.2" r="11" fill="#EB001B"/><circle cx="192.3" cy="158.1" r="11" fill="#F79E1B"/></g>
+        </g>
+        <path class="e-front" fill="#FFFFFF" fill-rule="evenodd" d="M110 90 H173 A7 7 0 0 1 180 97 V133 A7 7 0 0 1 173 140 H110 A7 7 0 0 1 103 133 V97 A7 7 0 0 1 110 90 Z M115 105 H123 A2 2 0 0 1 125 107 V112 A2 2 0 0 1 123 114 H115 A2 2 0 0 1 113 112 V107 A2 2 0 0 1 115 105 Z"/>
+        <g class="e-back">
+          <path fill="#FF5F00" d="M110 90 H173 A7 7 0 0 1 180 97 V100 H103 V97 A7 7 0 0 1 110 90 Z"/>
+          <path fill="#FFFFFF" fill-rule="evenodd" d="M103 110 H180 V133 A7 7 0 0 1 173 140 H110 A7 7 0 0 1 103 133 Z M112 118 H148 A2 2 0 0 1 150 120 V124 A2 2 0 0 1 148 126 H112 A2 2 0 0 1 110 124 V120 A2 2 0 0 1 112 118 Z"/>
+        </g>
+      </svg>
+    </div>
+    <a class="wordmark foot-link" href="#top" aria-label="moat, back to top"><span class="vh">moat</span></a>
+    <p>Being built in the open from Algiers, September to October 2026, during Thirduni.</p>
+  </div>
+  <div class="ticker" aria-label="Rails, protocols and standards referenced on this page">
+    <div class="tk-row"><div class="tk-track"><span class="tk-item">Stripe</span><i class="tk-sep"></i><span class="tk-item">Visa</span><i class="tk-sep"></i><span class="tk-item">Mastercard</span><i class="tk-sep"></i><span class="tk-item">PayPal</span><i class="tk-sep"></i><span class="tk-item">Google AP2</span><i class="tk-sep"></i><span class="tk-item">OpenAI ACP</span><i class="tk-sep"></i><span class="tk-item">Coinbase x402</span><i class="tk-sep"></i><span class="tk-item">Tempo MPP</span><i class="tk-sep"></i><span class="tk-item">Stripe</span><i class="tk-sep"></i><span class="tk-item">Visa</span><i class="tk-sep"></i><span class="tk-item">Mastercard</span><i class="tk-sep"></i><span class="tk-item">PayPal</span><i class="tk-sep"></i><span class="tk-item">Google AP2</span><i class="tk-sep"></i><span class="tk-item">OpenAI ACP</span><i class="tk-sep"></i><span class="tk-item">Coinbase x402</span><i class="tk-sep"></i><span class="tk-item">Tempo MPP</span><i class="tk-sep"></i></div></div>
+    <div class="tk-row rev"><div class="tk-track"><span class="tk-item">MCP</span><i class="tk-sep"></i><span class="tk-item">LangGraph</span><i class="tk-sep"></i><span class="tk-item">OpenAI Agents SDK</span><i class="tk-sep"></i><span class="tk-item">Claude Agent SDK</span><i class="tk-sep"></i><span class="tk-item">OWASP</span><i class="tk-sep"></i><span class="tk-item">NIST AI RMF</span><i class="tk-sep"></i><span class="tk-item">EU AI Act</span><i class="tk-sep"></i><span class="tk-item">Bloomberg</span><i class="tk-sep"></i><span class="tk-item">MCP</span><i class="tk-sep"></i><span class="tk-item">LangGraph</span><i class="tk-sep"></i><span class="tk-item">OpenAI Agents SDK</span><i class="tk-sep"></i><span class="tk-item">Claude Agent SDK</span><i class="tk-sep"></i><span class="tk-item">OWASP</span><i class="tk-sep"></i><span class="tk-item">NIST AI RMF</span><i class="tk-sep"></i><span class="tk-item">EU AI Act</span><i class="tk-sep"></i><span class="tk-item">Bloomberg</span><i class="tk-sep"></i></div></div>
+    <p class="tk-note">Rails, protocols and standards Moat is built against. Names belong to their owners. No affiliation implied.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll('.seat-head').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      document.querySelectorAll('.seat-head[aria-expanded="true"]').forEach(function (b) { if (b !== btn) b.setAttribute('aria-expanded', 'false'); });
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    });
+  });
+
+  if (!window.gsap || reduce) { root.classList.remove('js'); return; }
+  var hasST = !!window.ScrollTrigger;
+  if (hasST) gsap.registerPlugin(ScrollTrigger);
+
+  /* ---------- hero: the one orchestrated load ---------- */
+  var tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+  tl.to('.nav', { opacity: 1, duration: 0.8 }, 0)
+    .to('.hero .line-inner', { y: 0, duration: 1.15, stagger: 0.11 }, 0.15)
+    .to('.hero .lede', { opacity: 1, duration: 0.9 }, 0.75)
+    .to('.hero .cta-row', { opacity: 1, duration: 0.9 }, 0.9)
+    .to('.hero-fig', { opacity: 1, duration: 0.9 }, 0.5);
+  /* hero: the mark itself. The ring opens for what you authorised and closes on what you didn't */
+  var CX = 141, CY = 150, DX = 0.766, DY = 0.643;           // the gap sits on the lower-right diagonal
+  function at(d) { return { x: CX + DX * d, y: CY + DY * d }; }
+  var START = at(178), STOP = at(88), BACK = at(140);
+
+  var fullRing = document.querySelector('.lg-full'), fullLen = 100;
+  gsap.set(fullRing, { attr: { 'stroke-dasharray': '100 101', 'stroke-dashoffset': fullLen }, opacity: 0 });
+  gsap.set(['.lg-arcs', '.lg-dot', '.lg-card'], { opacity: 0 });
+  gsap.set('.lg-card', { scale: 0.8, y: 12, svgOrigin: '141 150' });
+
+  // assemble once, then stay
+  var build = gsap.timeline({ delay: 0.8, defaults: { ease: 'power3.out' } });
+  build.fromTo('.lg-arc', { attr: { 'stroke-dasharray': '100 150', 'stroke-dashoffset': 101 } },
+                          { attr: { 'stroke-dashoffset': 0 }, duration: 1, stagger: 0.14 })
+       .to('.lg-arcs', { opacity: 1, duration: 0.2 }, 0)
+       .fromTo('.lg-arcs', { rotation: -120, svgOrigin: '141 150' }, { rotation: 0, duration: 1.3, ease: 'power3.out' }, 0)
+       .fromTo('.lg-dot', { scale: 0, svgOrigin: '141 150' },
+                           { scale: 1, opacity: 1, duration: 0.55, ease: 'back.out(3)', stagger: 0.1 }, 0.55)
+       .to('.lg-card', { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: 'back.out(1.6)' }, 0.85);
+
+  function arrive(ok) {
+    var t = gsap.timeline();
+    t.set('.lg-stripe', { attr: { fill: ok ? '#00A650' : '#EB001B' } })
+     .set('.lg-tok', { opacity: 0, x: START.x, y: START.y, scale: 1 })
+     .to('.lg-tok', { opacity: 1, duration: 0.35 });
+
+    if (ok) {
+      // it came from you, so it goes through the gap
+      t.to('.lg-tok', { x: CX, y: CY, duration: 1.5, ease: 'power1.inOut' }, '<')
+       .to('.lg-tok', { opacity: 0, scale: 0.5, duration: 0.35 }, '-=0.2')
+       .to('.lg-card', { scale: 1.12, svgOrigin: '141 150', duration: 0.25, yoyo: true, repeat: 1 }, '<');
+    } else {
+      // it came from somewhere else, so the ring closes first
+      t.to('.lg-tok', { x: STOP.x, y: STOP.y, duration: 1.25, ease: 'power1.in' }, '<')
+       .to(fullRing, { opacity: 1, duration: 0.1 }, '<0.35')
+       .to(fullRing, { attr: { 'stroke-dashoffset': 0 }, duration: 0.75, ease: 'power3.inOut' }, '<')
+       .to('.lg-arcs', { opacity: 0, duration: 0.2 }, '<0.55')
+       .set('.lg-splash', { attr: { cx: STOP.x, cy: STOP.y }, opacity: 0.9, scale: 0.35, svgOrigin: STOP.x + ' ' + STOP.y })
+       .to('.lg-splash', { scale: 1.5, opacity: 0, duration: 1, ease: 'power1.out' })
+       .to(fullRing, { stroke: '#EB001B', duration: 0.25, yoyo: true, repeat: 3 }, '<')
+       .to('.lg-tok', { x: BACK.x, y: BACK.y, duration: 0.6, ease: 'back.out(2)' }, '<0.1')
+       .to('.lg-tok', { opacity: 0, scale: 0.7, duration: 0.4 }, '<0.35')
+       // then it opens again
+       .to(fullRing, { attr: { 'stroke-dashoffset': -fullLen }, duration: 0.7, ease: 'power2.inOut' }, '+=0.5')
+       .to('.lg-arcs', { opacity: 1, duration: 0.3 }, '<0.35')
+       .set(fullRing, { opacity: 0, attr: { 'stroke-dashoffset': fullLen } });
+    }
+    return t;
+  }
+
+  var cycle = gsap.timeline({ repeat: -1, repeatDelay: 1, delay: 3.4 });
+  cycle.add(arrive(true)).add(arrive(false), '+=0.9').to({}, { duration: 0.8 });
+
+  /* ---------- the creed: one statement at a time, each with its own build ---------- */
+  gsap.utils.toArray('.creed-line').forEach(function (line, i) {
+    var glyph = line.querySelector('.glyph');
+    var t = gsap.timeline({ scrollTrigger: { trigger: line, start: 'top 68%', once: true },
+                            defaults: { ease: 'power3.out' } });
+    t.to(glyph, { opacity: 1, duration: 0.5 })
+     .to(line.querySelector('p'), { opacity: 1, y: 0, duration: 0.7 }, 0.2)
+     .from(line.querySelector('p'), { y: 18, duration: 0.7 }, 0.2);
+
+    if (i === 0) {
+      t.from(line.querySelectorAll('.g-rail'), { scaleX: 0, transformOrigin: '0 50%', duration: 0.8, stagger: 0.12 }, 0.15)
+       .from(line.querySelectorAll('.g-tie'), { opacity: 0, duration: 0.3, stagger: 0.08 }, 0.5);
+    } else if (i === 1) {
+      t.from(line.querySelectorAll('.g-post'), { scaleY: 0, transformOrigin: '50% 50%', duration: 0.5, stagger: 0.1 }, 0.15)
+       .from(line.querySelector('.g-barL'), { x: -42, duration: 0.7, ease: 'power2.inOut' }, 0.5)
+       .from(line.querySelector('.g-barR'), { x: 42, duration: 0.7, ease: 'power2.inOut' }, 0.5);
+    } else if (i === 2) {
+      t.from(line.querySelector('.g-empty'), { scale: 0.4, transformOrigin: '50% 50%', duration: 0.7 }, 0.15)
+       .to(line.querySelector('.g-empty'), { rotation: 360, svgOrigin: '60 30', duration: 26, repeat: -1, ease: 'none' }, 0.9);
+    } else {
+      var ring = line.querySelector('.g-fill'), len = 2 * Math.PI * 22;
+      gsap.set(ring, { strokeDasharray: len, strokeDashoffset: len, rotation: -90, transformOrigin: '50% 50%' });
+      t.to(ring, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut' }, 0.2)
+       .from(line.querySelector('.g-core'), { scale: 0, transformOrigin: '50% 50%', duration: 0.5, ease: 'back.out(2)' }, 1.0);
+    }
+  });
+
+  /* ---------- pillar diagrams: each loops for as long as you watch ---------- */
+  var provLine = document.querySelector('.prov-line'), pl = provLine.getTotalLength();
+  gsap.set(provLine, { strokeDasharray: pl, strokeDashoffset: pl });
+
+  var provTL = gsap.timeline({ repeat: -1, repeatDelay: 1, paused: true, defaults: { ease: 'power2.out' } });
+  provTL.set(['.prov-box', '.prov-stop'], { opacity: 0 })
+        .set(provLine, { strokeDashoffset: pl })
+        .fromTo('.prov-box', { x: -10, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, stagger: 0.14 })
+        .to(provLine, { strokeDashoffset: 0, duration: 0.85, ease: 'none' }, '+=0.2')
+        .fromTo('.prov-stop', { scale: 0, svgOrigin: '220 90' },
+                               { scale: 1, opacity: 1, duration: 0.45, ease: 'back.out(2.2)' })
+        .to({}, { duration: 1.4 })
+        .to(['.prov-box', '.prov-stop'], { opacity: 0, duration: 0.4 })
+        .to(provLine, { strokeDashoffset: pl, duration: 0.4 }, '<');
+
+  var behTL = gsap.timeline({ repeat: -1, repeatDelay: 0.9, paused: true });
+  behTL.set(['.beh-normal line', '.beh-burst line', '.beh-flag'], { opacity: 0 })
+       .set(['.beh-normal line', '.beh-burst line'], { scaleY: 0, transformOrigin: '50% 100%' })
+       .to('.beh-normal line', { opacity: 1, scaleY: 1, duration: 0.3, stagger: 0.24, ease: 'power2.out' })
+       .to('.beh-burst line', { opacity: 1, scaleY: 1, duration: 0.18, stagger: 0.05, ease: 'power2.out' }, '+=0.25')
+       .fromTo('.beh-flag', { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 })
+       .to({}, { duration: 1.3 })
+       .to(['.beh-normal line', '.beh-burst line', '.beh-flag'], { opacity: 0, duration: 0.4 });
+
+  var evTL = gsap.timeline({ repeat: -1, repeatDelay: 1, paused: true, defaults: { ease: 'power3.out' } });
+  evTL.set(['.ev-card', '.ev-seal'], { opacity: 0 })
+      .fromTo('.ev-card', { x: function (i) { return [-34, 0, 34][i]; },
+                            y: function (i) { return [-12, 0, 12][i]; }, opacity: 0 },
+                           { x: 0, y: 0, opacity: 1, duration: 0.55, stagger: 0.12 })
+      .to('.ev-seal', { opacity: 1, duration: 0.45 }, '+=0.15')
+      .fromTo('.ev-seal', { rotation: -120, svgOrigin: '250 70' }, { rotation: 0, duration: 0.8, ease: 'power3.out' }, '<')
+      .to({}, { duration: 1.5 })
+      .to(['.ev-card', '.ev-seal'], { opacity: 0, duration: 0.4 });
+
+  // only run them while they're on screen
+  [['.pillars', [provTL, behTL, evTL]]].forEach(function (pair) {
+    ScrollTrigger.create({
+      trigger: pair[0], start: 'top 85%', end: 'bottom 10%',
+      onEnter: function () { pair[1].forEach(function (x) { x.play(); }); },
+      onEnterBack: function () { pair[1].forEach(function (x) { x.play(); }); },
+      onLeave: function () { pair[1].forEach(function (x) { x.pause(); }); },
+      onLeaveBack: function () { pair[1].forEach(function (x) { x.pause(); }); }
+    });
+  });
+
+  /* ---------- product: the call types itself, then the verdict lands ---------- */
+  var reqEl = document.getElementById('codeReq');
+  var reqText = 'moat.authorize({\n  action:  "payment",\n  amount:  480,\n  payee:   "ProMon Billing Ltd",\n  context: session\n})';
+  var callTL = gsap.timeline({ paused: true });
+  callTL.set(reqEl, { textContent: '' })
+        .set('.verdictpanel .ln', { opacity: 0, y: 6 })
+        .to({ n: 0 }, { n: reqText.length, duration: 2.2, ease: 'none',
+              onUpdate: function () {
+                var n = Math.round(this.targets()[0].n);
+                reqEl.innerHTML = reqText.slice(0, n).replace(/</g, '&lt;') + '<i class="caret"></i>';
+              } })
+        .to('.verdictpanel .ln', { opacity: 1, y: 0, duration: 0.4, stagger: 0.28, ease: 'power3.out' }, '+=0.4')
+        .call(function () { var c = reqEl.querySelector('.caret'); if (c) c.remove(); });
+
+  /* the architecture plays through once per visit, then loops while visible */
+  var archTL = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+  archTL.set(['.n1 .arow', '.acall', '.n2 .arow', '.apol', '.averdict', '.aconn b'], { opacity: 0, y: 6 })
+        .set(['.c1 i', '.c2 i'], { scaleX: 0, scaleY: 0 })
+        .set('.n3', { opacity: 1 })
+        .to('.n1 .arow:nth-of-type(1)', { opacity: 1, y: 0, duration: 0.4 })
+        .to('.n1 .arow:nth-of-type(2)', { opacity: 1, y: 0, duration: 0.4 }, '+=0.35')
+        .to('.n1 .arow.inject', { opacity: 1, y: 0, duration: 0.45 }, '+=0.45')
+        .to('.acall', { opacity: 1, y: 0, duration: 0.45 }, '+=0.45')
+        .to('.c1 i', { scaleX: 1, scaleY: 1, duration: 0.5, ease: 'power2.inOut' }, '+=0.25')
+        .to('.n2 .arow', { opacity: 1, y: 0, duration: 0.35, stagger: 0.3 }, '-=0.1')
+        .to('.apol', { opacity: 1, y: 0, duration: 0.4 }, '+=0.3')
+        .to('.averdict', { opacity: 1, y: 0, duration: 0.45, ease: 'back.out(2)' }, '+=0.4')
+        .to('.c2 i', { scaleX: 0.45, scaleY: 0.45, duration: 0.35, ease: 'power2.out' }, '+=0.2')
+        .to('.aconn.c2 b', { opacity: 1, y: 0, duration: 0.35 }, '-=0.1')
+        .to('.n3', { opacity: 0.45, duration: 0.5 }, '<');
+
+  ScrollTrigger.create({ trigger: '.callpair', start: 'top 80%', once: true, onEnter: function () { callTL.play(); } });
+  ScrollTrigger.create({ trigger: '#arch', start: 'top 78%', once: true, onEnter: function () { archTL.play(); } });
+
+  gsap.fromTo('.anode', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.12, ease: 'power3.out',
+    scrollTrigger: { trigger: '#arch', start: 'top 82%', once: true } });
+  gsap.fromTo('.vcard', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.1, ease: 'power3.out',
+    scrollTrigger: { trigger: '.trio', start: 'top 82%', once: true } });
+  gsap.fromTo('.dcard', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.1, ease: 'power3.out',
+    scrollTrigger: { trigger: '.deploy', start: 'top 85%', once: true } });
+  gsap.fromTo('.incidents li', { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.55, stagger: 0.12, ease: 'power3.out',
+    scrollTrigger: { trigger: '.incidents', start: 'top 80%', once: true } });
+
+  /* ---------- attacks: the matrix builds row by row, then tallies ---------- */
+  var tMatrix = gsap.timeline({ scrollTrigger: { trigger: '.threats', start: 'top 74%', once: true },
+                                defaults: { ease: 'power3.out' } });
+  tMatrix.fromTo('.threat', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.12 })
+         .fromTo('.chain .cell', { scaleY: 0.12, opacity: 0 },
+                                 { scaleY: 1, opacity: 1, duration: 0.45, ease: 'back.out(1.6)',
+                                   stagger: { each: 0.035, grid: [6, 5], from: 'start' } }, 0.25)
+         ;
+
+  /* ---------- plan: bars grow across the weeks, deliverables drop in ---------- */
+  gsap.timeline({ scrollTrigger: { trigger: '.gantt', start: 'top 76%', once: true },
+                  defaults: { ease: 'power3.out' } })
+      .fromTo('.vg-names i', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.08 })
+      .fromTo('.vg-axis i', { opacity: 0 }, { opacity: 1, duration: 0.4, stagger: 0.08 }, 0.1)
+      .fromTo('.vg-bar', { scaleY: 0 }, { scaleY: 1, duration: 0.8, ease: 'power2.inOut', stagger: 0.13 }, 0.25)
+      .fromTo('.vship', { opacity: 0, x: -10 },
+                        { opacity: 1, x: 0, duration: 0.5, ease: 'back.out(2)', stagger: 0.13 }, '-=0.45');
+
+  /* ---------- roles ---------- */
+  gsap.timeline({ scrollTrigger: { trigger: '.crew', start: 'top 78%', once: true },
+                  defaults: { ease: 'power3.out' } })
+      .fromTo('.crew-h', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 })
+      .fromTo('.seat', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.08 }, 0.15);
+
+  /* ---------- quiet reveals for the sections that had none ---------- */
+  gsap.utils.toArray('.attacks .section-h, .plan .section-h, .roles .section-h, .pillars-sec .section-h, .product .section-h, .evidence h3').forEach(function (el) {
+    gsap.from(el, { y: 20, opacity: 0, duration: 0.8, ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+  });
+  gsap.from('footer .wrap > *', { y: 16, opacity: 0, duration: 0.7, stagger: 0.1, ease: 'power3.out', clearProps: 'all',
+    scrollTrigger: { trigger: 'footer', start: 'top 92%', once: true } });
+
+
+  /* ---------- eased wheel scrolling (pointer devices only; touch keeps native) ---------- */
+  if (window.matchMedia('(pointer:fine)').matches) {
+    var target = window.scrollY, current = window.scrollY, running = false;
+    function maxScroll() { return document.documentElement.scrollHeight - window.innerHeight; }
+    function tick() {
+      current += (target - current) * 0.12;
+      if (Math.abs(target - current) < 0.4) { current = target; running = false; }
+      window.scrollTo(0, current);
+      if (hasST) ScrollTrigger.update();
+      if (running) requestAnimationFrame(tick);
+    }
+    window.addEventListener('wheel', function (e) {
+      if (e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      target = Math.max(0, Math.min(maxScroll(), target + e.deltaY));
+      if (!running) { running = true; current = window.scrollY; requestAnimationFrame(tick); }
+    }, { passive: false });
+    ['keydown', 'mousedown', 'touchstart'].forEach(function (ev) {
+      window.addEventListener(ev, function () { running = false; target = window.scrollY; });
+    });
+    window.addEventListener('resize', function () { target = window.scrollY; });
+  }
+})();
+</script>
+</body>
+</html>
