@@ -40,10 +40,10 @@
   .nav .wrap{padding-block:10px}
   .navbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
           height:60px;padding-inline:clamp(14px,2.4vw,24px);border-radius:16px;
-          background:rgba(226,226,231,.58);
-          -webkit-backdrop-filter:blur(20px) saturate(1.15);backdrop-filter:blur(20px) saturate(1.15);
-          border:1px solid rgba(17,17,17,.10);
-          box-shadow:0 6px 22px rgba(17,17,17,.07)}
+          background:linear-gradient(120deg,rgba(255,255,255,.82),rgba(255,248,243,.52));
+          -webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);
+          border:1px solid rgba(255,255,255,.85);
+          box-shadow:0 8px 32px rgba(17,17,17,.09),inset 0 1px 0 #fff,0 0 0 1px rgba(17,17,17,.06)}
   @supports not (backdrop-filter:blur(2px)){.navbar{background:#EDEDF0}}
   .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .wordmark{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
@@ -56,6 +56,11 @@
   .nav-links{display:flex;gap:clamp(18px,3vw,36px);list-style:none;margin:0;padding:0}
   .nav-links a{text-decoration:none;font-weight:600;color:var(--ink-2);font-size:.95rem}
   .nav-links a:hover{color:var(--ink)}
+  .nav-links a{position:relative;transition:color .2s ease}
+  .nav-links a::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--orange);transform:scaleX(0);transition:transform .25s ease;transform-origin:left}
+  .nav-links a[aria-current="location"]{color:var(--ink)}
+  .nav-links a[aria-current="location"]::after{transform:scaleX(1)}
+  section[id]{scroll-margin-top:96px}
   .nav-tag{font-size:.85rem;color:var(--ink-2)}
   @media (max-width:820px){.nav-tag{display:none}}
   @media (max-width:560px){
@@ -251,6 +256,22 @@
   }
 
   /* ===== plan: a schedule, running downward ===== */
+  .plan{background:radial-gradient(ellipse at 100% 0,rgba(247,158,27,.08),transparent 55%),var(--bg)}
+  .plan .built-grid{margin-top:36px}
+  .plan .dcard{position:relative;border-radius:18px;padding:clamp(20px,3vw,32px)}
+  .plan .built-card{border-color:rgba(255,95,0,.35);background:linear-gradient(135deg,#FFF4E8,#fff 80%);box-shadow:0 12px 32px rgba(255,95,0,.06);overflow:hidden}
+  .built-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--yellow))}
+  .build-badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:22px;border:1px solid #F2C39D;border-radius:999px;padding:5px 10px;color:#923900;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:#fff9f3}
+  .build-check{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .plan .built-card h4{font-size:1.2rem}
+  .plan .gantt{padding:clamp(16px,3vw,36px);background:rgba(255,255,255,.8);border:1px solid var(--sand);border-radius:20px;box-shadow:0 16px 48px rgba(17,17,17,.035)}
+  .plan .vg-bar{background:linear-gradient(180deg,var(--orange),var(--yellow));box-shadow:0 4px 14px rgba(255,95,0,.15)}
+  .plan .next-grid{counter-reset:week}
+  .plan .next-grid .dcard{counter-increment:week;background:#fff}
+  .plan .next-grid .dcard::before{content:"0" counter(week);display:block;margin-bottom:20px;color:#A44300;font-size:.8rem;font-weight:800;letter-spacing:.08em}
+  @media (hover:hover){.plan .dcard{transition:box-shadow .25s ease,border-color .25s ease}.plan .dcard:hover{border-color:#F79E1B;box-shadow:0 14px 34px rgba(17,17,17,.07)}}
+  @media(max-width:560px){.plan .gantt{padding:16px 10px}.plan .vg-head,.plan .vg-body{grid-template-columns:42px minmax(0,1fr) 78px;gap:8px}}
+  @media(prefers-reduced-motion:reduce){.nav-links a,.nav-links a::after,.plan .dcard{transition:none}}
   .gantt{margin-top:clamp(40px,6vw,72px);--bw:clamp(13px,1.6vw,22px)}
   .vg-head,.vg-body{display:grid;
     grid-template-columns:clamp(52px,6vw,74px) minmax(0,1fr) clamp(118px,17vw,210px);
@@ -657,13 +678,15 @@
       <h2 class="section-h">What is built. What we deliver next.</h2>
       <p class="section-lede">Phase one is implemented. The next phase targets four weeks of evaluation and hardening, ending in a reproducible research release. These are delivery targets, with completion judged by the checks below.</p>
 
-      <div class="deploy">
-        <div class="dcard">
-          <h4>Built · working prototype</h4>
+      <div class="deploy built-grid">
+        <div class="dcard built-card">
+          <span class="build-badge"><svg class="build-check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8l3 3 7-7"/></svg>Built · phase one</span>
+          <h4>Working prototype</h4>
           <p>MCP forwarding, source matching, policy evaluation, payment interception, intent registration, approval and resume, and signed evidence with offline verification. Integration tests cover the payment flow and Streamable HTTP.</p>
         </div>
-        <div class="dcard">
-          <h4>Built · first evaluation</h4>
+        <div class="dcard built-card">
+          <span class="build-badge"><svg class="build-check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8l3 3 7-7"/></svg>Built · initial runs</span>
+          <h4>First evaluation</h4>
           <p>A mock marketplace and payment server, ten attack cases, a scripted-agent runner and initial model runs. Payments are simulated. These exploratory runs do not yet establish reliability, false-positive rates or production readiness.</p>
         </div>
       </div>
@@ -699,7 +722,7 @@
           </div>
         </div>
       </div>
-      <div class="deploy" style="margin-top:48px">
+      <div class="deploy next-grid" style="margin-top:48px">
         <div class="dcard">
           <h4>Week 1 · establish the baseline</h4>
           <p>Add legitimate purchases alongside the attack cases. Verify the complete approval flow and evidence logs. Define scoring and compare no protection, a spending cap, an allowlist and Moat under the same tasks.</p>
@@ -864,7 +887,21 @@
     });
   });
 
-  if (!window.gsap || reduce) { root.classList.remove('js'); return; }
+  // Navigation state works independently of animation libraries and motion preferences.
+  var navLinks = Array.from(document.querySelectorAll('.nav-links a'));
+  if ('IntersectionObserver' in window) {
+    var navObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        navLinks.forEach(function (link) {
+          if (link.hash === '#' + entry.target.id) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+      });
+    }, { rootMargin: '-15% 0px -65% 0px', threshold: 0 });
+    document.querySelectorAll('#top, #product, #attacks, #plan, #roles').forEach(function (el) { navObserver.observe(el); });
+  }
+  if (!window.gsap || !window.ScrollTrigger || reduce) { root.classList.remove('js'); return; }
   var hasST = !!window.ScrollTrigger;
   if (hasST) gsap.registerPlugin(ScrollTrigger);
 
@@ -1038,8 +1075,17 @@
     scrollTrigger: { trigger: '#arch', start: 'top 82%', once: true } });
   gsap.fromTo('.vcard', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.1, ease: 'power3.out',
     scrollTrigger: { trigger: '.trio', start: 'top 82%', once: true } });
-  gsap.fromTo('.dcard', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.1, ease: 'power3.out',
-    scrollTrigger: { trigger: '.deploy', start: 'top 85%', once: true } });
+  // Each group reveals at its own position, not when the first product card appears.
+  gsap.utils.toArray('.deploy').forEach(function (group) {
+    gsap.utils.toArray(group.querySelectorAll('.dcard')).forEach(function (card, i) {
+      var reveal = gsap.timeline({scrollTrigger: {trigger: card, start: 'top 90%', once: true}, defaults: {ease: 'power3.out'}});
+      reveal.fromTo(card, {opacity: 0, y: 24}, {opacity: 1, y: 0, duration: .75, delay: window.innerWidth > 760 ? (i % 2) * .1 : 0});
+      if (card.classList.contains('built-card')) {
+        reveal.from(card.querySelector('.build-badge'), {opacity: 0, y: 8, duration: .45}, .2)
+          .fromTo(card.querySelector('.build-check path'), {strokeDasharray: 20, strokeDashoffset: 20}, {strokeDashoffset: 0, duration: .45}, .45);
+      }
+    });
+  });
   gsap.fromTo('.incidents li', { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.55, stagger: 0.12, ease: 'power3.out',
     scrollTrigger: { trigger: '.incidents', start: 'top 80%', once: true } });
 
